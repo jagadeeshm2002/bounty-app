@@ -1,0 +1,39 @@
+version: '3.8'
+
+
+# this not working because i dont know how to do it
+
+services:
+  postgres:
+    image: postgres:13
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 9876
+      POSTGRES_DB: bounty
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - prisma-network
+
+  prisma:
+    image: node:16
+    working_dir: /app
+    volumes:
+      - ./:/app
+    depends_on:
+      - postgres
+    networks:
+      - prisma-network
+    command: >
+      sh -c "npm install && npx prisma migrate deploy && npm run dev"
+    environment:
+      DATABASE_URL: postgres://postgres:9876@postgres:5432/bounty
+
+volumes:
+  postgres-data:
+
+networks:
+  prisma-network:
