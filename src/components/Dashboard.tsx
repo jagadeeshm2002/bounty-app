@@ -10,7 +10,7 @@ const Dashboard = () => {
       {sessionData ? (
         <div>
           <h1>Dashboard</h1>
-          <p>{sessionData?.user?.name}</p>
+          <p>{JSON.stringify(sessionData)}</p>
         </div>
       ) : (
         <div>
