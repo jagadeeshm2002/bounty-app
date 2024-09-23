@@ -1,55 +1,104 @@
 import { NextAuthOptions } from "next-auth";
 import GitHubProvider from "next-auth/providers/github";
 import { PrismaAdapter } from "@auth/prisma-adapter";
-import prisma from "@/db"; // Adjust the path based on your folder structure
-const adapter = PrismaAdapter(prisma) as any;
-// export interface session extends Session {
-//   user: {
-//     id: string;
-//     jwtToken: string;
-//     username: string;
-//     email: string;
-//     name: string;
-//   };
-// }
+import prisma from "@/db";
 
-// export interface token extends jwt {
-//   id: string;
-//   accessToken: string;
-// }
+import { Session } from "next-auth";
+import { JWT } from "next-auth/jwt";
+import { Role } from "@/actions/types";
+
+// Custom Session Interface
+export interface CustomSession extends Session {
+  user: {
+    id: string;
+    jwtToken: string;
+    username: string;
+    email: string;
+    name: string;
+    role: Role;
+  };
+}
+
+// Custom JWT Interface
+export interface CustomJWT extends JWT {
+  id: string;
+  accessToken: string;
+  username: string;
+  role: Role;
+}
+
+// Adapter initialization
+const adapter = PrismaAdapter(prisma) as any;
 
 export const authOptions: NextAuthOptions = {
-  adapter: adapter,
+  adapter,
   providers: [
     GitHubProvider({
-      clientId: process.env.GITHUB_CLIENT_ID as string,
-      clientSecret: process.env.GITHUB_CLIENT_SECRET as string,
+      clientId: process.env.GITHUB_CLIENT_ID!,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET!,
+      profile(profile) {
+        return {
+          id: profile.id.toString(),
+          name: profile.name || profile.login,
+          email: profile.email,
+          image: profile.avatar_url,
+          username: profile.login,
+        };
+      },
     }),
   ],
   session: {
-    strategy: "jwt", // Using JWT instead of database sessions
+    strategy: "jwt",
   },
-  jwt: {
-    secret: process.env.NEXTAUTH_SECRET, // Make sure this is set in .env
+  callbacks: {
+    async signIn({ user, account, profile }) {
+      if (account?.provider === "github") {
+        const githubUser = profile as any;
+        const username = githubUser.login;
+
+        const role =
+          account.role && Object.values(Role).includes(account.role as Role)
+            ? (account.role as Role)
+            : Role.USER;
+
+        // Update or create user in the database
+        await prisma.user.upsert({
+          where: { id: user.id },
+          update: { username: username, role: role },
+          create: {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            username: username,
+            role: role,
+          },
+        });
+      }
+      return true;
+    },
+    async jwt({ token, user, account }) {
+      const customToken = token as CustomJWT;
+
+      if (account && user) {
+        customToken.id = user.id;
+        customToken.username = (user as any).username || "";
+        customToken.accessToken = account.access_token!;
+        customToken.role = (user as any).role || Role.USER;
+      }
+      return customToken;
+    },
+    async session({ session, token }) {
+      const customSession = session as CustomSession;
+      const customToken = token as CustomJWT;
+
+      if (customSession.user) {
+        customSession.user.id = customToken.id;
+        customSession.user.username = customToken.username;
+        customSession.user.jwtToken = customToken.accessToken;
+        customSession.user.role = customToken.role;
+      }
+
+      return customSession;
+    },
   },
-  // callbacks: {
-  //   // Customize JWT contents
-  //   async jwt({ token, user, account }) {
-  //     if (account && user) {
-  //       // Store additional info in the token
-  //       token.id = user.id;
-  //       token.accessToken = account.access_token;
-  //     }
-  //     return token;
-  //   },
-  //   // Attach token data to session
-  //   async session({ session, token }) {
-  //       const newSession: session = session as session;
-  //     if (session?.user && session?.user?.id) {
-  //       session?.user?.id = token.id;
-  //       session?.user?.jwtToken = token.accessToken;
-  //     }
-  //     return session;
-  //   },
-  // },
 };
