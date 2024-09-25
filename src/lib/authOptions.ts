@@ -7,6 +7,7 @@ import { Session } from "next-auth";
 import { JWT } from "next-auth/jwt";
 import { Role } from "@/actions/types";
 import { AdapterUser } from "next-auth/adapters";
+import { Projector } from "lucide-react";
 
 // Define a type for the user with included accounts
 type UserWithAccounts = Prisma.UserGetPayload<{
@@ -76,14 +77,11 @@ export const authOptions: NextAuthOptions = {
     strategy: "jwt",
   },
   callbacks: {
-    async signIn({ user, account, profile }) {
+    async signIn({ user, account, profile}) {
       if (account?.provider === "github") {
         const githubUser = profile as any;
         const username = githubUser.login;
-        const role =
-          account.role && Object.values(Role).includes(account.role as Role)
-            ? (account.role as Role)
-            : Role.USER;
+        
 
         try {
           // Check if the user already exists
@@ -112,7 +110,7 @@ export const authOptions: NextAuthOptions = {
               // Update the existing user with GitHub information
               await prisma.user.update({
                 where: { id: existingUser.id },
-                data: { username: username, role: role },
+                data: { username: username, role: Role.USER},
               });
             }
             return true; // Allow sign in
@@ -124,7 +122,7 @@ export const authOptions: NextAuthOptions = {
                 name: user.name || githubUser.name,
                 email: user.email!,
                 username: username,
-                role: role,
+                role: Role.USER,
                 accounts: {
                   create: {
                     type: account.type,

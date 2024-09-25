@@ -6,18 +6,18 @@ import { Role } from "@/actions/types";
 import { coin } from "@/assets/dataUrl";
 import { Button } from "@/components/ui/button";
 import { Result } from "postcss";
+import { Github } from "lucide-react";
 
 type Props = {};
 
 const SignIn = (props: Props) => {
   //   const router = useRouter();
 
-  const handleSignIn = async (role: string) => {
+  const handleSignIn = async (role: Role) => {
     try {
       const result = await signIn("github", {
         redirect: false,
-        callbackUrl: "/dashboard",
-        role: role,
+        callbackUrl: `/dashboard`,
       });
 
       if (result?.error) {
@@ -36,21 +36,16 @@ const SignIn = (props: Props) => {
           <img src={coin} width={50} height={50} alt="" />
           <p className="text-[36px] font-mono">Bounty</p>
         </div>
-        <div className=" flex flex-col gap-4 px-4 py-4 rounded-md bg-slate-800 border border-slate-600">
+        <div className=" flex min-h-36 min-w-52 flex-col px-4 py-4 rounded-md bg-slate-800 border border-slate-600 gap-6">
           <h1>Welcome Back🫣</h1>
 
-          <div className="flex gap-4">
-          <Button variant="secondary" onClick={() => handleSignIn(Role.USER)}>
-          <img src="https://github.com/fluidicon.png" alt="github" width={24} height={24} />
-            <p>signin as User</p>
-          </Button>
-          <Button variant="secondary" onClick={() => handleSignIn(Role.OWNER)}>
-          <img src="https://github.com/fluidicon.png" alt="github" width={24} height={24} />
-            <p >signin as owner</p>
-          </Button>
+          <div className="flex flex-row justify-center items-center">
+            <Button variant="secondary" onClick={() => handleSignIn(Role.USER)}>
+              <Github />
+              <p>signin</p>
+            </Button>
           </div>
           {JSON.stringify(Result)}
-          
         </div>
       </div>
     </div>
