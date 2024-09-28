@@ -1,8 +1,8 @@
+"use server";
 import React from "react";
 import Image from "next/image";
 import { coin, grid } from "@/assets/dataUrl";
 import Noise from "@/assets/grainNoise.gif";
-
 import Link from "next/link";
 
 function LandingPage() {
@@ -30,12 +30,7 @@ function LandingPage() {
         <div className="w-full">
           <nav className="flex w-full h-20 pt-3 justify-center items-center">
             <div className="flex flex-row justify-center items-center mx-auto">
-              <Image
-                src={coin}
-                alt="Bounty"
-                width={50}
-                height={50}
-              />
+              <Image src={coin} alt="Bounty" width={50} height={50} />
               <p className="text-[36px] font-mono ">Bounty.</p>
             </div>
           </nav>
@@ -54,10 +49,12 @@ function LandingPage() {
             </p>
           </div>
           <div className="flex flex-row justify-between items-center gap-7">
-            <Link href="/auth/signin" className="border-yellow-600 border-2 bg-yellow-600 bg-opacity-20 px-5 py-2 rounded-md hover:bg-opacity-10">
+            <Link
+              href="/auth/signin"
+              className="border-yellow-600 border-2 bg-yellow-600 bg-opacity-20 px-5 py-2 rounded-md hover:bg-opacity-10"
+            >
               Get Started
             </Link>
-            
           </div>
         </div>
       </main>
