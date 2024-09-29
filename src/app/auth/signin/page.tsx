@@ -1,23 +1,29 @@
 "use client";
-import { signIn } from "next-auth/react";
-import { useRouter } from "next/router";
+import { signIn, useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import React from "react";
 import { Role } from "@/actions/types";
 import { coin } from "@/assets/dataUrl";
 import { Button } from "@/components/ui/button";
 import { Result } from "postcss";
 import { Github } from "lucide-react";
+import { Redirect } from "@/components/Redirect";
 
 type Props = {};
 
 const SignIn = (props: Props) => {
-  //   const router = useRouter();
+  const router = useRouter();
+  const { data: sessionData } = useSession();
+
+  if (sessionData) {
+    return <Redirect to="/repos" />;
+  }
 
   const handleSignIn = async (role: Role) => {
     try {
       const result = await signIn("github", {
         redirect: false,
-        callbackUrl: `/dashboard`,
+        callbackUrl: `/repos`,
       });
 
       if (result?.error) {

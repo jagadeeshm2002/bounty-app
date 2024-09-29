@@ -50,7 +50,7 @@ function LandingPage() {
           </div>
           <div className="flex flex-row justify-between items-center gap-7">
             <Link
-              href="/auth/signin"
+              href="/repos"
               className="border-yellow-600 border-2 bg-yellow-600 bg-opacity-20 px-5 py-2 rounded-md hover:bg-opacity-10"
             >
               Get Started
