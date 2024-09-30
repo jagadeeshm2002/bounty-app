@@ -3,6 +3,7 @@ import React from 'react';
 
 interface Props {
   children: React.ReactNode;
+  Header: React.ReactNode
 }
 
 export default (props: Props) => {
