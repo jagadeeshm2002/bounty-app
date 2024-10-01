@@ -1,13 +1,13 @@
-import { NextAuthOptions, Profile } from "next-auth";
+import { NextAuthOptions } from "next-auth";
 import GitHubProvider from "next-auth/providers/github";
 import { PrismaAdapter } from "@auth/prisma-adapter";
-import { Prisma, User, Account } from "@prisma/client";
+import { Prisma,  Account } from "@prisma/client";
 import prisma from "@/db";
 import { Session } from "next-auth";
 import { JWT } from "next-auth/jwt";
 import { Role } from "@/actions/types";
 import { AdapterUser } from "next-auth/adapters";
-import { Projector } from "lucide-react";
+
 
 // Define a type for the user with included accounts
 type UserWithAccounts = Prisma.UserGetPayload<{
@@ -149,7 +149,8 @@ export const authOptions: NextAuthOptions = {
       const customToken = token as CustomJWT;
 
       if (account && user) {
-        customToken.id = user.id;
+        
+        customToken.id = user.id as string;
         customToken.username = (user as any).username || "";
         customToken.accessToken = account.access_token!;
         customToken.role = (user as any).role || Role.USER;

@@ -8,9 +8,10 @@ interface Props {
 
 export default async function MainLayout(props: Props) {
   const session = await getServerSession();
+  console.log(session)
 
   if (!session?.user) {
-    return <Redirect to={'/'} />;
+    return <Redirect to={'/auth/signin'} />;
   }
-  return <div className="w-full py-16">{props.children}</div>;
+  return <div className="w-full h-full">{props.children}</div>;
 }

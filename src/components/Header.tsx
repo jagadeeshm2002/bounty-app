@@ -13,22 +13,26 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { usePathname } from 'next/navigation';
 
 type Props = {}
 
 function Header (props: Props)  {
+  const path =usePathname();
+  const active = path.split("/")[1];
+  
   return (
-    <div className="flex min-h-screen w-full flex-col">
+    <div className="flex  w-full flex-col">
       <header className="sticky top-0 flex h-16 items-center gap-4 border-b border-b-gray-500 bg-background px-4 md:px-6">
         <nav className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
           <Link href="/" className="flex items-center gap-2 text-lg font-semibold md:text-base">
             <Github className="h-6 w-6" />
             <span className="sr-only">Bounty</span>
           </Link>
-          <Link href="/repos" className="text-foreground transition-colors hover:text-foreground">
+          <Link href="/repos" className={` transition-colors hover:text-foreground ${active === "repos" ? "text-foreground" : "text-muted-foreground"}`}>
             Repos
           </Link>
-          <Link href="/bounty" className="text-muted-foreground transition-colors hover:text-foreground">
+          <Link href="/bounty" className={` transition-colors hover:text-foreground ${active === "bounty" ? "text-foreground" : "text-muted-foreground"}`}>
             Bounty
           </Link>
           
