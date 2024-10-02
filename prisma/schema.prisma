@@ -19,16 +19,17 @@ enum Role {
   OWNER
   ADMIN
 }
+
 // prisma/schema.prisma
 model User {
-  id            String    @id @default(cuid()) // Unique identifier for the user
-  name          String 
-  email         String   @unique // User's email
-  username      String  @unique
-  image         String? // User's profile picture from GitHub
-  role          Role     @default(USER)
-  accounts      Account[] // Associated accounts (GitHub)
-  sessions      Session[] // Associated sessions
+  id       String    @id @default(cuid()) // Unique identifier for the user
+  name     String
+  email    String    @unique // User's email
+  username String    @unique
+  image    String? // User's profile picture from GitHub
+  role     Role      @default(USER)
+  accounts Account[] // Associated accounts (GitHub)
+  sessions Session[] // Associated sessions
 }
 
 model Account {
@@ -44,7 +45,7 @@ model Account {
   scope             String?
   id_token          String?
   session_state     String?
-  user              User    @relation(fields: [userId], references: [id],onDelete: Cascade)
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
