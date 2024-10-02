@@ -32,10 +32,15 @@ export default function NewRepoPage() {
   return (
     <div className="flex flex-col px-5 w-full h-full">
       <div className="mb-4">
-        <div className="flex flex-row justify-between items-center"><p className="font-mono text-4xl mb-3">Create a Webhook</p><Button className=" hover:bg-gray-700 active:bg-gray-800 border border-gray-50 border-opacity-20" variant="default">
-              Back
-            </Button></div>
-        
+        <div className="flex flex-row justify-between items-center">
+          <p className="font-mono text-4xl mb-3">Create a Webhook</p>
+          <Button
+            className=" hover:bg-gray-700 active:bg-gray-800 border border-gray-50 border-opacity-20"
+            variant="default"
+          >
+            Back
+          </Button>
+        </div>
 
         <div className="flex flex-col border-2 border-gray-500 rounded-lg w-full h-full p-3 px-6 bg-gray-800 bg-opacity-50 ">
           <div>
@@ -53,7 +58,10 @@ export default function NewRepoPage() {
                   onChange={(e) => setRepoName(e.target.value)} // Update the input state
                 />
 
-                <Button type="submit" className=" mt-5 hover:bg-gray-700 active:bg-gray-800 border border-gray-50 border-opacity-20">
+                <Button
+                  type="submit"
+                  className=" mt-5 hover:bg-gray-700 active:bg-gray-800 border border-gray-50 border-opacity-20"
+                >
                   Generate
                 </Button>
               </form>
@@ -74,8 +82,15 @@ export default function NewRepoPage() {
             </div>
           </div>
           <div className="flex flex-col  w-full gap-3 mt-4 ">
-            <p className="font-sans ">*After create webhook in github repo you can save it,this will test your webhook and store in your database.</p>
-            <Button className="w-32 hover:bg-gray-700 active:bg-gray-800 border border-gray-50 border-opacity-20" variant={"default"}>
+            <p className="font-sans ">
+              *After create webhook in github repo you can save it,this will
+              test your webhook and store in your database. repo name must same
+              as github
+            </p>
+            <Button
+              className="w-32 hover:bg-gray-700 active:bg-gray-800 border border-gray-50 border-opacity-20"
+              variant={"default"}
+            >
               Save
             </Button>
           </div>

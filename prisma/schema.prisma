@@ -20,16 +20,29 @@ enum Role {
   ADMIN
 }
 
+enum Status {
+  OPEN
+  CLAIMED
+  PAID
+}
+
 // prisma/schema.prisma
 model User {
-  id       String    @id @default(cuid()) // Unique identifier for the user
-  name     String
-  email    String    @unique // User's email
-  username String    @unique
-  image    String? // User's profile picture from GitHub
-  role     Role      @default(USER)
-  accounts Account[] // Associated accounts (GitHub)
-  sessions Session[] // Associated sessions
+  id           String         @id @default(cuid()) // Unique identifier for the user
+  name         String
+  githubId     String?        @unique
+  email        String         @unique // User's email
+  username     String         @unique
+  image        String? // User's profile picture from GitHub
+  createdAt    DateTime       @default(now())
+  role         Role           @default(USER)
+  accounts     Account[] // Associated accounts (GitHub)
+  sessions     Session[] // Associated sessions
+  Repository   Repository[]
+  issues       Issue[]
+  comments     IssueComment[]
+  bounties     Bounty[]
+  bountyClaims BountyClaim[]
 }
 
 model Account {
@@ -64,4 +77,81 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+model Repository {
+  id          Int      @id @default(autoincrement())
+  githubId    String      @unique // "id": 853392521,
+  name        String //"name": "motion-page",
+  fullName    String   @unique // "full_name": "jagadeeshm2002/motion-page",
+  htmlUrl     String?
+  description String?
+  userId       String
+  user         User           @relation(fields: [userId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  issues      Issue[]
+  bounties    Bounty[]
+}
+
+model Issue {
+  id           Int            @id @default(autoincrement())
+  githubId     String            @unique
+  number       Int
+  title        String
+  body         String?
+  state        String
+  htmlUrl      String
+  createdAt    DateTime
+  updatedAt    DateTime
+  closedAt     DateTime?
+  repository   Repository     @relation(fields: [repositoryId], references: [id])
+  repositoryId Int
+  userId       String
+  user         User           @relation(fields: [userId], references: [id])
+  comments     IssueComment[]
+  bounties     Bounty[]
+}
+
+model IssueComment {
+  id        Int      @id @default(autoincrement())
+  githubId  String      @unique
+  body      String
+  createdAt DateTime
+  updatedAt DateTime
+  issue     Issue    @relation(fields: [issueId], references: [id])
+  issueId   Int
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  bounty    Bounty?
+}
+
+model Bounty {
+  id         Int           @id @default(autoincrement())
+  amount     Float
+  currency   String        @default("USD")
+  status     Status        @default(OPEN)
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+  issue      Issue         @relation(fields: [issueId], references: [id])
+  issueId    Int
+  repo       Repository    @relation(fields: [repoId], references: [id])
+  repoId     Int
+  creatorId  String
+  creator    User          @relation(fields: [creatorId], references: [id])
+  comment    IssueComment  @relation(fields: [commentId], references: [id])
+  commentId  Int           @unique
+  assignedTo String?
+  claims     BountyClaim[]
+}
+
+model BountyClaim {
+  id         Int      @id @default(autoincrement())
+  status     String   @default("PENDING")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  bounty     Bounty   @relation(fields: [bountyId], references: [id])
+  bountyId   Int
+  claimant   User     @relation(fields: [claimantId], references: [id])
+  claimantId String
 }
