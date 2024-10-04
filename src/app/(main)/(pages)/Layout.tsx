@@ -8,7 +8,7 @@ interface Props {
 
 export default async function MainLayout(props: Props) {
   const session = await getServerSession();
-  console.log(session)
+  
 
   if (!session?.user) {
     return <Redirect to={'/auth/signin'} />;

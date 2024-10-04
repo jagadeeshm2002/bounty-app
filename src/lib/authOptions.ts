@@ -1,36 +1,26 @@
 import { NextAuthOptions } from "next-auth";
 import GitHubProvider from "next-auth/providers/github";
 import { PrismaAdapter } from "@auth/prisma-adapter";
-import { Prisma,  Account } from "@prisma/client";
+import { Prisma, Account } from "@prisma/client";
 import prisma from "@/db";
 import { Session } from "next-auth";
 import { JWT } from "next-auth/jwt";
 import { Role } from "@/actions/types";
 import { AdapterUser } from "next-auth/adapters";
 
-
-// Define a type for the user with included accounts
 type UserWithAccounts = Prisma.UserGetPayload<{
   include: { accounts: true };
 }>;
+
 export interface CustomAccount extends Account {
   role: Role;
 }
-// export interface CustomUser extends User {
-//   role: Role;
-//   username: string;
-// }
-
-// function isCustomUser(user: User | AdapterUser): user is CustomUser {
-//   return 'username' in user && 'role' in user;
-// }
 
 type CustomUser = AdapterUser & {
   username: string | null;
   role: Role | null;
 };
 
-// Custom Session Interface
 export interface CustomSession extends Session {
   user: {
     id: string;
@@ -42,7 +32,6 @@ export interface CustomSession extends Session {
   };
 }
 
-// Custom JWT Interface
 export interface CustomJWT extends JWT {
   id: string;
   accessToken: string;
@@ -50,7 +39,6 @@ export interface CustomJWT extends JWT {
   role: Role;
 }
 
-// Adapter initialization
 const adapter = PrismaAdapter(prisma) as any;
 
 export const authOptions: NextAuthOptions = {
@@ -77,62 +65,38 @@ export const authOptions: NextAuthOptions = {
     strategy: "jwt",
   },
   callbacks: {
-    async signIn({ user, account, profile}) {
+    async signIn({ user, account, profile }) {
       if (account?.provider === "github") {
         const githubUser = profile as any;
         const username = githubUser.login;
-        
 
         try {
-          // Check if the user already exists
-          const existingUser = (await prisma.user.findUnique({
-            where: { email: user.email! }, // Email will exist on both User and AdapterUser
+          const existingUser = await prisma.user.upsert({
+            where: { email: user.email! },
+            update: {
+              username: username,
+              role: Role.USER,
+            },
+            create: {
+              id: user.id,
+              name: user.name || githubUser.name,
+              email: user.email!,
+              username: username,
+              role: Role.USER,
+            },
             include: { accounts: true },
-          })) as UserWithAccounts | null;
+          });
 
-          if (existingUser) {
-            if (
-              !existingUser.accounts.some((acc) => acc.provider === "github")
-            ) {
-              // Link the GitHub account to the existing user
-              await prisma.account.create({
-                data: {
-                  userId: existingUser.id,
-                  type: account.type,
-                  provider: account.provider,
-                  providerAccountId: account.providerAccountId,
-                  access_token: account.access_token,
-                  token_type: account.token_type,
-                  scope: account.scope,
-                },
-              });
-
-              // Update the existing user with GitHub information
-              await prisma.user.update({
-                where: { id: existingUser.id },
-                data: { username: username, role: Role.USER},
-              });
-            }
-            return true; // Allow sign in
-          } else {
-            // Create a new user if one doesn't exist
-            await prisma.user.create({
+          if (!existingUser.accounts.some((acc) => acc.provider === "github")) {
+            await prisma.account.create({
               data: {
-                id: user.id,
-                name: user.name || githubUser.name,
-                email: user.email!,
-                username: username,
-                role: Role.USER,
-                accounts: {
-                  create: {
-                    type: account.type,
-                    provider: account.provider,
-                    providerAccountId: account.providerAccountId,
-                    access_token: account.access_token,
-                    token_type: account.token_type,
-                    scope: account.scope,
-                  },
-                },
+                userId: existingUser.id,
+                type: account.type,
+                provider: account.provider,
+                providerAccountId: account.providerAccountId,
+                access_token: account.access_token,
+                token_type: account.token_type,
+                scope: account.scope,
               },
             });
           }
@@ -140,35 +104,45 @@ export const authOptions: NextAuthOptions = {
           return true;
         } catch (error) {
           console.error("Error in signIn callback:", error);
-          return false; // Prevent sign in if there's an error
+          return false;
         }
       }
-      return true; // Allow sign in for other providers
+      return true;
     },
     async jwt({ token, user, account }) {
-      const customToken = token as CustomJWT;
-
       if (account && user) {
-        
-        customToken.id = user.id as string;
-        customToken.username = (user as any).username || "";
-        customToken.accessToken = account.access_token!;
-        customToken.role = (user as any).role || Role.USER;
+        return {
+          ...token,
+          id: user.id,
+          username: (user as CustomUser).username || "",
+          accessToken: account.access_token!,
+          role: (user as CustomUser).role || Role.USER,
+        } as CustomJWT;
       }
-      return customToken;
+      return token as CustomJWT;
     },
     async session({ session, token }) {
-      const customSession = session as CustomSession;
       const customToken = token as CustomJWT;
+      if (session.user) {
+        // Fetch the user from the database
+        const dbUser = await prisma.user.findUnique({
+          where: { email: session.user.email! },
+          select: { id: true, username: true, role: true },
+        });
 
-      if (customSession.user) {
-        customSession.user.id = customToken.id;
-        customSession.user.username = customToken.username;
-        customSession.user.jwtToken = customToken.accessToken;
-        customSession.user.role = customToken.role;
+        if (dbUser) {
+          session.user.id = dbUser.id;
+          session.user.username = dbUser.username;
+          session.user.role = dbUser.role;
+        }
       }
-
-      return customSession;
+      return {
+        ...session,
+        user: {
+          ...session.user,
+          jwtToken: customToken.accessToken,
+        },
+      } as CustomSession;
     },
   },
 };
